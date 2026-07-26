@@ -10,7 +10,6 @@ jobs:
 build_and_upload:
 runs-on: ubuntu-latest
 
-```
 steps:
   - name: Checkout code
     uses: actions/checkout@v4
@@ -76,4 +75,4 @@ steps:
         ./compiler/build/outputs/**/*.aar
         ./compiler/build/outputs/**/*.jar
       if-no-files-found: warn
-```
+      
