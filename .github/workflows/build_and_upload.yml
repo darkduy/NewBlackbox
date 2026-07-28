@@ -1,4 +1,4 @@
-name: Build APKs and AARs
+name: build_and_upload
 
 on:
   push:
