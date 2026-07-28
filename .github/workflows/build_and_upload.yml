@@ -1,4 +1,4 @@
-name: Build and Upload
+name: Build APKs and AARs
 
 on:
   push:
@@ -7,51 +7,60 @@ on:
   workflow_dispatch:
 
 jobs:
-  build_and_upload:
+  build:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
-          java-version: "17"
-          cache: gradle
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'gradle'
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android SDK components
-        run: |
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
-            "platform-tools" \
-            "platforms;android-34" \
-            "build-tools;34.0.0" \
-            "ndk;29.0.13846066" || true
+      - name: Accept Android SDK licenses
+        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || yes | $ANDROID_HOME/tools/bin/sdkmanager --licenses || true
 
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      - name: Build Debug APK
-        run: ./gradlew assembleDebug
+      - name: Build APKs and AARs
+        run: ./gradlew assembleDebug assembleRelease :Bcore:assembleDebug :Bcore:assembleRelease :black-reflection:assemble :compiler:assemble
 
-      - name: Build Release APK
-        run: ./gradlew assembleRelease
-
-      - name: Upload Debug APKs
+      - name: Upload app APKs
         uses: actions/upload-artifact@v4
         with:
-          name: debug-apks
-          path: app/build/outputs/apk/debug/*.apk
+          name: app-apks
+          path: app/build/outputs/apk/**/*.apk
           if-no-files-found: warn
 
-      - name: Upload Release APKs
+      - name: Upload Bcore AARs
         uses: actions/upload-artifact@v4
         with:
-          name: release-apks
-          path: app/build/outputs/apk/release/*.apk
+          name: bcore-aars
+          path: Bcore/build/outputs/aar/*.aar
+          if-no-files-found: warn
+
+      - name: Upload black-reflection artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: black-reflection-artifacts
+          path: |
+            black-reflection/build/libs/*.jar
+            black-reflection/build/outputs/**/*.aar
+          if-no-files-found: warn
+
+      - name: Upload compiler artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: compiler-artifacts
+          path: |
+            compiler/build/libs/*.jar
+            compiler/build/outputs/**/*.aar
           if-no-files-found: warn
